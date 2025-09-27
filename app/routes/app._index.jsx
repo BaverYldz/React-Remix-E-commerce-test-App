@@ -232,9 +232,6 @@ export default function Index() {
                   <List.Item>
                     <strong>read_products & write_products:</strong> Test product read/write permissions
                   </List.Item>
-                  <List.Item>
-                    <strong>read_themes:</strong> Test theme read permissions
-                  </List.Item>
                 </List>
                 <InlineStack gap="300">
                   <Button url="/app/products" variant="primary">

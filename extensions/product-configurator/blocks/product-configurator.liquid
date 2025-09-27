@@ -1,0 +1,296 @@
+<div id="block-{{ block.id }}" class="custom-product-configurator">
+  <h3>{{ block.settings.title | default: "Özel Ürün Konfigüratörü" }}</h3>
+  
+  <form class="configurator-form">
+    <div class="form-group">
+      <label for="height-{{ block.id }}">Boy (cm):</label>
+      <input type="number" id="height-{{ block.id }}" min="10" max="500" step="1" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="width-{{ block.id }}">En (cm):</label>
+      <input type="number" id="width-{{ block.id }}" min="10" max="500" step="1" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="material-{{ block.id }}">Materyal:</label>
+      <select id="material-{{ block.id }}" required>
+        <option value="">Seçiniz...</option>
+        <option value="wood">Ahşap - 25₺/m²</option>
+        <option value="metal">Metal - 35₺/m²</option>
+        <option value="pvc">PVC - 20₺/m²</option>
+        <option value="glass">Cam - 45₺/m²</option>
+      </select>
+    </div>
+  </form>
+  
+  <div class="price-display">
+    <p><strong>Tahmini Fiyat: <span class="price">0₺</span></strong></p>
+    <p><small>Alan: <span class="area-info">0 m²</span> | Materyal: <span class="material-info">Seçilmedi</span></small></p>
+  </div>
+  
+  <button class="add-to-cart-btn" disabled>Sepete Ekle</button>
+</div>
+
+<style>
+.custom-product-configurator {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.price-display {
+  background: linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 100%);
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  border: 2px solid #b3d7ff;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.price-display:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 91, 211, 0.15);
+}
+
+.price {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: #005bd3;
+}
+
+.area-info, .material-info {
+  color: #666;
+  font-weight: 500;
+}
+
+.add-to-cart-btn {
+  background: #008060;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.add-to-cart-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Mevcut varyant seçiciyi gizle */
+.product-form__variants,
+.variant-picker,
+[data-option-selector] {
+  display: none !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Block-specific element seçiciler
+  const blockId = '{{ block.id }}';
+  const height = document.getElementById('height-' + blockId);
+  const width = document.getElementById('width-' + blockId);
+  const material = document.getElementById('material-' + blockId);
+  const priceDisplay = document.querySelector('#block-' + blockId + ' .price-display');
+  const priceSpan = document.querySelector('#block-' + blockId + ' .price');
+  const areaSpan = document.querySelector('#block-' + blockId + ' .area-info');
+  const materialInfoSpan = document.querySelector('#block-' + blockId + ' .material-info');
+  const addBtn = document.querySelector('#block-' + blockId + ' .add-to-cart-btn');
+  
+  console.log('Product Configurator initialized for block:', blockId);
+  console.log('Elements found:', { height, width, material, priceDisplay, priceSpan, addBtn });
+  
+  function calculatePrice() {
+    console.log('Calculating price...');
+    
+    const h = parseInt(height?.value || 0);
+    const w = parseInt(width?.value || 0);
+    const mat = material?.value;
+    
+    console.log('Values:', { height: h, width: w, material: mat });
+    
+    // Alan hesaplama (her zaman göster)
+    const area = (h * w) / 10000; // cm² to m²
+    
+    // Materyal bilgisi güncelle
+    const materialNames = { 
+      wood: 'Ahşap (25₺/m²)', 
+      metal: 'Metal (35₺/m²)', 
+      pvc: 'PVC (20₺/m²)', 
+      glass: 'Cam (45₺/m²)' 
+    };
+    
+    if (materialInfoSpan) {
+      materialInfoSpan.textContent = mat ? materialNames[mat] : 'Seçilmedi';
+    }
+    
+    // Alan bilgisi her zaman göster
+    if (areaSpan) {
+      if (h > 0 && w > 0) {
+        areaSpan.textContent = area.toFixed(4) + ' m²';
+      } else {
+        areaSpan.textContent = '0 m²';
+      }
+    }
+    
+    // Fiyat hesaplama
+    if (h > 0 && w > 0 && mat) {
+      // Tüm değerler geçerli - fiyat hesapla
+      const prices = { wood: 25, metal: 35, pvc: 20, glass: 45 };
+      const materialPrice = prices[mat] || 0;
+      const totalPrice = area * materialPrice;
+      
+      console.log('Full calculation:', { area, materialPrice, totalPrice });
+      
+      if (priceSpan) {
+        priceSpan.textContent = totalPrice.toFixed(2) + '₺';
+      }
+      if (addBtn) {
+        addBtn.disabled = false;
+      }
+      
+      console.log('Price updated to:', totalPrice.toFixed(2) + '₺');
+      
+    } else if (h > 0 && w > 0 && !mat) {
+      // Boy ve en var ama materyal yok
+      if (priceSpan) {
+        priceSpan.textContent = 'Materyal seçin';
+      }
+      if (addBtn) {
+        addBtn.disabled = true;
+      }
+      
+    } else if (mat && (!h || !w || h <= 0 || w <= 0)) {
+      // Materyal var ama ölçüler eksik
+      if (priceSpan) {
+        priceSpan.textContent = 'Boy ve En girin';
+      }
+      if (addBtn) {
+        addBtn.disabled = true;
+      }
+      
+    } else {
+      // Hiçbir şey girilmemiş
+      if (priceSpan) {
+        priceSpan.textContent = 'Değerleri girin';
+      }
+      if (addBtn) {
+        addBtn.disabled = true;
+      }
+    }
+  }
+  
+  // Event listeners
+  if (height) {
+    height.addEventListener('input', function() {
+      console.log('Height changed:', this.value);
+      calculatePrice();
+    });
+  }
+  
+  if (width) {
+    width.addEventListener('input', function() {
+      console.log('Width changed:', this.value);
+      calculatePrice();
+    });
+  }
+  
+  if (material) {
+    material.addEventListener('change', function() {
+      console.log('Material changed:', this.value);
+      calculatePrice();
+    });
+  }
+  
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      console.log('Add to cart clicked');
+      
+      const config = {
+        height: height?.value,
+        width: width?.value,
+        material: material?.value,
+        price: priceSpan?.textContent,
+        productId: '{{ product.id | default: "unknown" }}'
+      };
+      
+      console.log('Sending config:', config);
+      
+      // Loading state
+      const originalText = addBtn.textContent;
+      addBtn.textContent = 'Ekleniyor...';
+      addBtn.disabled = true;
+      
+      fetch('/apps/custom-configurator/add-to-cart', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(config)
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+          window.location.href = '/cart';
+        } else {
+          alert('Hata: ' + (data.error || 'Bilinmeyen hata'));
+          addBtn.textContent = originalText;
+          addBtn.disabled = false;
+        }
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        alert('Bağlantı hatası: ' + error.message);
+        addBtn.textContent = originalText;
+        addBtn.disabled = false;
+      });
+    });
+  }
+  
+  // İlk hesaplama
+  setTimeout(calculatePrice, 100);
+});
+</script>
+
+{% schema %}
+{
+  "name": "Özel Ürün Konfigüratörü",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Başlık",
+      "default": "Özel Ürün Konfigüratörü"
+    }
+  ]
+}
+{% endschema %}
