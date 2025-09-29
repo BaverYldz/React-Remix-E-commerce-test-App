@@ -1,5 +1,7 @@
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
+import { TemporaryProductCleanup } from "../cleanup-system.js";
+import { startUserCleanup } from "../cleanup-scheduler.js";
 
 // Fiyatlama kuralları (Task 7)
 const PRICING_RULES = {
@@ -104,48 +106,18 @@ async function createTemporaryProduct(admin, config) {
         throw new Error("Ürün oluşturulamadı");
     }
 
-    // Silme zamanını kaydet (Task 11)
-    await saveProductForDeletion(admin, product.id, Date.now() + (2 * 60 * 60 * 1000));
+    // Task 11: Silme zamanını kaydet
+    const cleanup = new TemporaryProductCleanup(admin);
+    const productIdNumber = product.id.replace('gid://shopify/Product/', '');
+    await cleanup.markProductForCleanup(productIdNumber);
 
     return product;
-}
-
-// Silinecek ürünleri kaydetme fonksiyonu
-async function saveProductForDeletion(admin, productId, deleteAt) {
-    // Bu örnekte metafield kullanıyoruz, gerçek uygulamada database tercih edilir
-    try {
-        await admin.graphql(`
-      mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
-        metafieldsSet(metafields: $metafields) {
-          metafields {
-            id
-          }
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    `, {
-            variables: {
-                metafields: [{
-                    namespace: "custom",
-                    key: "temp_product_delete_at",
-                    type: "number_integer",
-                    value: deleteAt.toString(),
-                    ownerId: productId
-                }]
-            }
-        });
-    } catch (error) {
-        console.error("Silme zamanı kaydetme hatası:", error);
-    }
 }
 
 // Task 10: Sepete ekleme fonksiyonu
 async function addToCart(admin, product, config) {
     const { height, width, material } = config;
-
+    
     // Variant ID'yi al
     const variantId = product.variants.edges[0]?.node?.id;
     if (!variantId) {
@@ -175,6 +147,10 @@ async function addToCart(admin, product, config) {
 export async function action({ request }) {
     try {
         const { admin } = await authenticate.admin(request);
+        
+        // Task 12: Cleanup sistemini başlat (ilk authentication'da)
+        await startUserCleanup(admin);
+        
         const formData = await request.json();
 
         const { height, width, material, productId } = formData;
@@ -195,11 +171,11 @@ export async function action({ request }) {
         // Materyal mapping - frontend'ten gelen değerleri backend'teki key'lere çevir
         const materialMapping = {
             "wood": "Ahşap",
-            "metal": "Metal",
+            "metal": "Metal", 
             "pvc": "PVC",
             "glass": "Cam"
         };
-
+        
         const mappedMaterial = materialMapping[material] || material;
         console.log("🔄 Material mapping:", material, "->", mappedMaterial);
 
@@ -236,7 +212,7 @@ export async function action({ request }) {
     } catch (error) {
         console.error("❌ Custom configurator error:", error);
         console.error("❌ Stack trace:", error.stack);
-
+        
         // Detailed error response
         return json({
             success: false,
