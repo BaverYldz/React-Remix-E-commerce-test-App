@@ -1,3 +1,65 @@
+<script>
+// Theme Extension Message Handler - Ana Store İçin
+console.log('🎧 Theme store message listener loading...');
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎯 Setting up Theme Extension message handler in main store');
+    
+    // Theme Extension'dan gelen mesajları dinle
+    window.addEventListener('message', function(event) {
+        console.log('📨 Store received message:', event.data);
+        
+        if (event.data.type === 'CUSTOM_CONFIGURATOR_ADD_TO_CART') {
+            handleConfiguratorAddToCart(event.data.data);
+        }
+    });
+    
+    async function handleConfiguratorAddToCart(config) {
+        console.log('🛒 Handling configurator add to cart in main store:', config);
+        
+        try {
+            // Ana ürünün variant ID'sini al
+            const productData = {{ product | json }};
+            const firstVariantId = productData.variants[0].id;
+            
+            console.log('Product data:', productData);
+            console.log('Using variant ID:', firstVariantId);
+            
+            // Shopify Cart API - doğru format (FormData)
+            const formData = new FormData();
+            formData.append('id', firstVariantId);
+            formData.append('quantity', '1');
+            formData.append('properties[Yükseklik]', config.height + ' cm');
+            formData.append('properties[Genişlik]', config.width + ' cm');
+            formData.append('properties[Materyal]', config.material);
+            formData.append('properties[Fiyat]', config.price);
+            formData.append('properties[Özel Ürün]', 'Konfigüratör ile oluşturuldu');
+            
+            console.log('Adding to cart with variant ID:', firstVariantId);
+            
+            const response = await fetch('/cart/add.js', {
+                method: 'POST',
+                body: formData // FormData kullan, JSON değil!
+            });
+            
+            if (response.ok) {
+                console.log('✅ Added to cart successfully');
+                window.location.href = '/cart';
+            } else {
+                console.error('❌ Cart add failed:', response.status);
+                alert('Sepete eklenirken sorun oluştu. Lütfen tekrar deneyin.');
+            }
+            
+        } catch (error) {
+            console.error('❌ Store message handler error:', error);
+            alert('Bağlantı hatası: ' + error.message);
+        }
+    }
+    
+    console.log('✅ Theme Extension message handler ready in main store');
+});
+</script>
+
 <div id="block-{{ block.id }}" class="custom-product-configurator">
   <h3>{{ block.settings.title | default: "Özel Ürün Konfigüratörü" }}</h3>
   
@@ -161,7 +223,17 @@ document.addEventListener('DOMContentLoaded', function() {
       // Tüm değerler geçerli - fiyat hesapla
       const prices = { wood: 25, metal: 35, pvc: 20, glass: 45 };
       const materialPrice = prices[mat] || 0;
-      const totalPrice = area * materialPrice;
+      
+      // Alan katsayısı (Task 7 - tam backend ile uyumlu)
+      let areaMultiplier = 1.0;
+      if (area < 0.1) areaMultiplier = 1.5;        // 0-0.1 m² (küçük)
+      else if (area < 0.5) areaMultiplier = 1.2;   // 0.1-0.5 m² (orta)
+      else if (area < 2) areaMultiplier = 1.0;     // 0.5-2 m² (standart)
+      else if (area < 5) areaMultiplier = 0.9;     // 2-5 m² (büyük)
+      else areaMultiplier = 0.8;                   // 5+ m² (çok büyük)
+      
+      // Toplam fiyat = Alan × Materyal fiyatı × Alan katsayısı
+      const totalPrice = area * materialPrice * areaMultiplier;
       
       console.log('Full calculation:', { area, materialPrice, totalPrice });
       
@@ -244,40 +316,34 @@ document.addEventListener('DOMContentLoaded', function() {
       addBtn.textContent = 'Ekleniyor...';
       addBtn.disabled = true;
       
-      fetch('/apps/custom-configurator/add-to-cart', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(config)
-      })
-      .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-      })
-      .then(data => {
-        console.log('Response data:', data);
-        if (data.success) {
-          window.location.href = '/cart';
-        } else {
-          alert('Hata: ' + (data.error || 'Bilinmeyen hata'));
-          addBtn.textContent = originalText;
-          addBtn.disabled = false;
-        }
-      })
-      .catch(error => {
-        console.error('Fetch error:', error);
-        alert('Bağlantı hatası: ' + error.message);
-        addBtn.textContent = originalText;
-        addBtn.disabled = false;
-      });
+      // Theme App Extension -> Ana App mesaj gönder
+      console.log('📨 Sending message to parent app:', config);
+      
+      // SADECE postMessage kullan - API call yapma!
+      console.log('📨 Sending postMessage to parent window');
+      
+      // Ana store'a mesaj gönder (her durumda)
+      window.postMessage({
+        type: 'CUSTOM_CONFIGURATOR_ADD_TO_CART',
+        data: config,
+        source: 'theme-app-extension'
+      }, '*');
+      
+      // Başarı mesajı göster ve sepete yönlendir
+      addBtn.textContent = 'Eklendi! Sepete gidiliyor...';
+      setTimeout(() => {
+        window.location.href = '/cart';
+      }, 2000);
+      
+      return; // Sadece postMessage kullan, API call yok!
     });
   }
   
   // İlk hesaplama
   setTimeout(calculatePrice, 100);
 });
+
+// Theme Extension Ready - Simple postMessage approach
 </script>
 
 {% schema %}
