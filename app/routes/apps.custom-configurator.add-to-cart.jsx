@@ -145,7 +145,7 @@ async function saveProductForDeletion(admin, productId, deleteAt) {
 // Task 10: Sepete ekleme fonksiyonu
 async function addToCart(admin, product, config) {
     const { height, width, material } = config;
-    
+
     // Variant ID'yi al
     const variantId = product.variants.edges[0]?.node?.id;
     if (!variantId) {
@@ -195,11 +195,11 @@ export async function action({ request }) {
         // Materyal mapping - frontend'ten gelen değerleri backend'teki key'lere çevir
         const materialMapping = {
             "wood": "Ahşap",
-            "metal": "Metal", 
+            "metal": "Metal",
             "pvc": "PVC",
             "glass": "Cam"
         };
-        
+
         const mappedMaterial = materialMapping[material] || material;
         console.log("🔄 Material mapping:", material, "->", mappedMaterial);
 
@@ -236,7 +236,7 @@ export async function action({ request }) {
     } catch (error) {
         console.error("❌ Custom configurator error:", error);
         console.error("❌ Stack trace:", error.stack);
-        
+
         // Detailed error response
         return json({
             success: false,

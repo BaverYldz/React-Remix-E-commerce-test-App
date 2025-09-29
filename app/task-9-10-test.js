@@ -17,7 +17,7 @@ console.log("   • Tema editöründe ürün sayfasına git");
 console.log("   • Özel Ürün Konfigüratörü bloğunu ekle");
 console.log("   • Test değerleri gir:");
 console.log("     - Boy: 100 cm");
-console.log("     - En: 150 cm"); 
+console.log("     - En: 150 cm");
 console.log("     - Materyal: Ahşap");
 console.log("   • 'Sepete Ekle' butonuna tıkla");
 
@@ -69,27 +69,27 @@ console.log("\n🚀 HAZIR! Test'e başlayabilirsin!");
  * Manuel test için helper fonksiyon
  */
 if (typeof window !== 'undefined') {
-    window.testTaskResult = function(responseData) {
+    window.testTaskResult = function (responseData) {
         console.log("\n📊 RESPONSE ANALİZİ:");
         console.log("===================");
-        
+
         if (responseData.success) {
             console.log("✅ Başarılı!");
-            
+
             if (responseData.product) {
                 console.log(`📦 Ürün: ${responseData.product.title}`);
                 console.log(`💰 ID: ${responseData.product.id}`);
             }
-            
+
             if (responseData.cart) {
                 console.log(`🛒 Variant ID: ${responseData.cart.variantId}`);
                 console.log("📝 Properties:", responseData.cart.properties);
             }
-            
+
             if (responseData.redirectUrl) {
                 console.log(`🔗 Redirect URL: ${responseData.redirectUrl}`);
             }
-            
+
             console.log("🎉 Task 9-10 BAŞARILI!");
         } else {
             console.log("❌ Hata:", responseData.error);
