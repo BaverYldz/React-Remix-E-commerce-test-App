@@ -14,7 +14,7 @@ const testScenarios = [
         ],
         expected: "Metafield: custom.cleanup_at = ISO string (oluşturma + 2 saat)"
     },
-    
+
     {
         name: "Task 12: Otomatik temizlik",
         description: "Her 5 dakikada expired ürünler otomatik silinir",
@@ -26,7 +26,7 @@ const testScenarios = [
         ],
         expected: "Console: 'Cleanup completed: X deleted, Y errors'"
     },
-    
+
     {
         name: "Task 13: Siparişli ürün güvenliği",
         description: "Siparişe girmiş ürünler de 2 saat sonra silinir",

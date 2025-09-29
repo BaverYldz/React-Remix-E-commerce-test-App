@@ -9,12 +9,12 @@ export async function action({ request }) {
         const { admin } = await authenticate.admin(request);
         const formData = await request.formData();
         const action = formData.get('action');
-        
+
         if (action === 'test') {
             // Test expired product oluştur ve cleanup yap
             console.log('� Running cleanup system test...');
             const result = await testCleanupSystem(admin);
-            
+
             return json({
                 success: true,
                 message: `Test completed: ${result.success ? 'PASSED' : 'FAILED'}`,
@@ -24,14 +24,14 @@ export async function action({ request }) {
             // Normal cleanup
             console.log('🧹 Manual cleanup requested');
             const result = await triggerManualCleanup(admin);
-            
+
             return json({
                 success: true,
                 message: `Cleanup completed: ${result.deleted} deleted, ${result.errors} errors`,
                 details: result
             });
         }
-        
+
     } catch (error) {
         console.error('❌ Manual cleanup failed:', error);
         return json({
@@ -46,7 +46,7 @@ export default function CleanupPage() {
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
             <h1>🧹 Cleanup System Test</h1>
-            
+
             <div style={{ marginBottom: '20px' }}>
                 <h2>Task 11-13: Geçici Ürün Temizlik Sistemi</h2>
                 <p>Bu sistem:</p>
@@ -56,18 +56,18 @@ export default function CleanupPage() {
                     <li>✅ <strong>Task 13:</strong> Siparişe girmiş ürünleri de temizler</li>
                 </ul>
             </div>
-            
+
             <div style={{ marginBottom: '20px' }}>
-                <button 
+                <button
                     onClick={() => {
                         const formData = new FormData();
                         formData.append('action', 'normal');
                         fetch('/apps/cleanup-manual', { method: 'POST', body: formData })
-                        .then(r => r.json())
-                        .then(data => {
-                            alert('Normal Cleanup:\n' + JSON.stringify(data, null, 2));
-                        })
-                        .catch(err => alert('Error: ' + err.message));
+                            .then(r => r.json())
+                            .then(data => {
+                                alert('Normal Cleanup:\n' + JSON.stringify(data, null, 2));
+                            })
+                            .catch(err => alert('Error: ' + err.message));
                     }}
                     style={{
                         padding: '10px 20px',
@@ -82,17 +82,17 @@ export default function CleanupPage() {
                 >
                     🗑️ Normal Cleanup (Gerçek Expired)
                 </button>
-                
-                <button 
+
+                <button
                     onClick={() => {
                         const formData = new FormData();
                         formData.append('action', 'test');
                         fetch('/apps/cleanup-manual', { method: 'POST', body: formData })
-                        .then(r => r.json())
-                        .then(data => {
-                            alert('Test Cleanup:\n' + JSON.stringify(data, null, 2));
-                        })
-                        .catch(err => alert('Error: ' + err.message));
+                            .then(r => r.json())
+                            .then(data => {
+                                alert('Test Cleanup:\n' + JSON.stringify(data, null, 2));
+                            })
+                            .catch(err => alert('Error: ' + err.message));
                     }}
                     style={{
                         padding: '10px 20px',
@@ -107,7 +107,7 @@ export default function CleanupPage() {
                     🧪 Test Cleanup (Fake Expired)
                 </button>
             </div>
-            
+
             <div style={{ backgroundColor: '#f5f5f5', padding: '15px', borderRadius: '5px' }}>
                 <h3>Test Adımları:</h3>
                 <ol>
@@ -118,7 +118,7 @@ export default function CleanupPage() {
                     <li>2 saat+ eski ürünlerin silindiğini kontrol et</li>
                 </ol>
             </div>
-            
+
             <div style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
                 <p><strong>Not:</strong> Gerçek üretimde cleanup her 5 dakikada otomatik çalışır.</p>
                 <p><strong>Güvenlik:</strong> Siparişe girmiş ürünler de 2 saat sonra silinir (Task 13).</p>

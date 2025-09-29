@@ -5,9 +5,9 @@ import { authenticate } from "../shopify.server";
 export async function action({ request }) {
     try {
         const { admin } = await authenticate.admin(request);
-        
+
         console.log('🧪 Simple cleanup test starting...');
-        
+
         // 1. Find temporary products with geçici-ürün tag
         const query = `
             query {
@@ -23,14 +23,14 @@ export async function action({ request }) {
                 }
             }
         `;
-        
+
         const response = await admin.graphql(query);
         const result = await response.json();
-        
+
         const products = result.data?.products?.edges || [];
-        
+
         console.log(`Found ${products.length} temporary products`);
-        
+
         return json({
             success: true,
             message: `Found ${products.length} temporary products`,
@@ -40,7 +40,7 @@ export async function action({ request }) {
                 createdAt: edge.node.createdAt
             }))
         });
-        
+
     } catch (error) {
         console.error('❌ Simple test failed:', error);
         return json({
@@ -54,14 +54,14 @@ export default function SimpleCleanupTest() {
     return (
         <div style={{ padding: '20px' }}>
             <h1>🧪 Simple Cleanup Test</h1>
-            <button 
+            <button
                 onClick={() => {
                     fetch('/apps/simple-cleanup-test', { method: 'POST' })
-                    .then(r => r.json())
-                    .then(data => {
-                        alert('Result:\n' + JSON.stringify(data, null, 2));
-                    })
-                    .catch(err => alert('Error: ' + err.message));
+                        .then(r => r.json())
+                        .then(data => {
+                            alert('Result:\n' + JSON.stringify(data, null, 2));
+                        })
+                        .catch(err => alert('Error: ' + err.message));
                 }}
                 style={{
                     padding: '10px 20px',
