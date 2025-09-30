@@ -6,7 +6,7 @@ export async function action({ request }) {
     try {
         const { admin } = await authenticate.admin(request);
 
-        console.log('🧪 Simple cleanup test starting...');
+        console.log('Simple cleanup test starting...');
 
         // 1. Find temporary products with geçici-ürün tag
         const query = `
@@ -42,7 +42,7 @@ export async function action({ request }) {
         });
 
     } catch (error) {
-        console.error('❌ Simple test failed:', error);
+        console.error('Simple test failed:', error);
         return json({
             success: false,
             error: error.message
@@ -53,7 +53,7 @@ export async function action({ request }) {
 export default function SimpleCleanupTest() {
     return (
         <div style={{ padding: '20px' }}>
-            <h1>🧪 Simple Cleanup Test</h1>
+            <h1>Simple Cleanup Test</h1>
             <button
                 onClick={() => {
                     fetch('/apps/simple-cleanup-test', { method: 'POST' })
@@ -64,15 +64,24 @@ export default function SimpleCleanupTest() {
                         .catch(err => alert('Error: ' + err.message));
                 }}
                 style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#2196f3',
+                    padding: '12px 24px',
+                    backgroundColor: '#2c3e50',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer'
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#34495e';
+                }}
+                onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#2c3e50';
                 }}
             >
-                🔍 List Temporary Products
+                List Temporary Products
             </button>
         </div>
     );

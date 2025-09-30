@@ -33,3 +33,41 @@ export const unauthenticated = shopify.unauthenticated;
 export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
+
+// Cleanup sistemi başlatma
+let cleanupSystemInitialized = false;
+
+export async function initializeCleanupSystem(admin) {
+  if (cleanupSystemInitialized) {
+    console.log('Cleanup system already initialized');
+    return;
+  }
+
+  try {
+    console.log('Initializing cleanup system...');
+    
+    // Dinamik import kullan
+    const { startCleanupScheduler } = await import('./cleanup-system');
+    
+    // 5 dakikada bir cleanup çalıştır
+    const cleanupInterval = startCleanupScheduler(admin, 5);
+    
+    // Cleanup sistemi başlatıldığını işaretle
+    cleanupSystemInitialized = true;
+    
+    console.log('Cleanup system initialized successfully');
+    
+    // Graceful shutdown için cleanup
+    process.on('SIGTERM', () => {
+      console.log('🛑 Stopping cleanup system...');
+      if (cleanupInterval) {
+        clearInterval(cleanupInterval);
+      }
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to initialize cleanup system:', error);
+    return false;
+  }
+}

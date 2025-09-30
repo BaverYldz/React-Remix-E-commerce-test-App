@@ -1,4 +1,4 @@
-// Task 12: Manual Cleanup Endpoint - Test için
+// Manual Cleanup
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { triggerManualCleanup } from "../cleanup-scheduler.js";
@@ -104,7 +104,7 @@ export default function CleanupPage() {
                         cursor: 'pointer'
                     }}
                 >
-                    🧪 Test Cleanup (Fake Expired)
+                    Test Cleanup (Fake Expired)
                 </button>
             </div>
 

@@ -1,4 +1,4 @@
-// Task 11-13 Test Scenarios
+// Test Scenarios
 console.log('🧪 Testing Task 11-13: Cleanup System');
 
 // Test senaryoları:

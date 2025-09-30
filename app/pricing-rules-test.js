@@ -1,4 +1,4 @@
-// Task 7 - Fiyatlama Kuralları Test Senaryoları
+// Fiyatlama Kuralları Test Senaryoları
 
 /**
  * FIYATLAMA KURALLARI SİSTEMİ

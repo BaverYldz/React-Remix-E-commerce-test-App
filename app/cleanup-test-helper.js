@@ -1,4 +1,4 @@
-// Task 12 Test: Expired Product Simülasyonu
+// Expired Product Simülâsyonu
 // Manual cleanup test için expired product oluştur
 
 export async function createExpiredTestProduct(admin) {

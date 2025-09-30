@@ -1,4 +1,4 @@
-// Task 9-10 Test Senaryoları
+// Test Senaryoları
 
 /**
  * TEST ADIMLARI

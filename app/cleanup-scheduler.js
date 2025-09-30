@@ -1,5 +1,4 @@
-// Task 12: Cleanup Scheduler - Ana app'te başlatılacak
-import { authenticate } from "./shopify.server";
+// Cleanup Scheduler
 import { startCleanupScheduler } from "./cleanup-system.js";
 
 // Global cleanup interval reference
@@ -7,7 +6,7 @@ let cleanupInterval = null;
 
 export async function initializeCleanupSystem() {
     try {
-        console.log('🚀 Initializing cleanup system...');
+        console.log('Initializing cleanup system...');
 
         // Eğer zaten çalışıyorsa durdur
         if (cleanupInterval) {
@@ -20,7 +19,7 @@ export async function initializeCleanupSystem() {
 
         return true;
     } catch (error) {
-        console.error('❌ Failed to initialize cleanup system:', error);
+        console.error('Failed to initialize cleanup system:', error);
         return false;
     }
 }
@@ -29,17 +28,17 @@ export async function initializeCleanupSystem() {
 export async function startUserCleanup(admin) {
     try {
         if (cleanupInterval) {
-            console.log('⚠️ Cleanup already running, skipping...');
+            console.log('Cleanup already running, skipping...');
             return true;
         }
 
         console.log('🎯 Starting cleanup scheduler with authenticated admin...');
         cleanupInterval = startCleanupScheduler(admin, 5); // Her 5 dakikada bir
 
-        console.log('✅ Cleanup system started successfully');
+        console.log('Cleanup system started successfully');
         return true;
     } catch (error) {
-        console.error('❌ Failed to start cleanup system:', error);
+        console.error('Failed to start cleanup system:', error);
         return false;
     }
 }

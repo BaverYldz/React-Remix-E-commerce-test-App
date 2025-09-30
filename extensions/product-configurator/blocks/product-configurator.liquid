@@ -10,7 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('📨 Store received message:', event.data);
         
         if (event.data.type === 'CUSTOM_CONFIGURATOR_ADD_TO_CART') {
-            handleConfiguratorAddToCart(event.data.data);
+         // Sepet fiyat güncelleyici
+document.addEventListener('DOMContentLoaded', function() {
+  if (!window.location.pathname.includes('/cart')) {
+    return;
+  }eConfiguratorAddToCart(event.data.data);
         }
     });
     
@@ -24,29 +28,134 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Product data:', productData);
             console.log('Using variant ID:', firstVariantId);
+            console.log('Calculated price:', config.price);
+            
+            // ÖNCELİKLE: Ana sayfadaki fiyatı güncelle
+            updateMainProductPrice(config.price);
             
             // Shopify Cart API - doğru format (FormData)
             const formData = new FormData();
             formData.append('id', firstVariantId);
             formData.append('quantity', '1');
+            
+            // ÖNEMLİ: Fiyatı properties olarak ekle
             formData.append('properties[Yükseklik]', config.height + ' cm');
             formData.append('properties[Genişlik]', config.width + ' cm');
             formData.append('properties[Materyal]', config.material);
-            formData.append('properties[Fiyat]', config.price);
+            formData.append('properties[Hesaplanan Fiyat]', config.price + '₺');
+            formData.append('properties[Alan]', config.area + ' m²');
             formData.append('properties[Özel Ürün]', 'Konfigüratör ile oluşturuldu');
+            formData.append('properties[Oluşturma Zamanı]', new Date().toLocaleString('tr-TR'));
             
-            console.log('Adding to cart with variant ID:', firstVariantId);
+            console.log('Adding to cart with calculated price:', config.price);
             
             const response = await fetch('/cart/add.js', {
                 method: 'POST',
-                body: formData // FormData kullan, JSON değil!
+                body: formData
             });
             
             console.log('Cart API response status:', response.status);
-            console.log('Cart API response headers:', response.headers);
             
             if (response.ok) {
-                console.log('✅ Added to cart successfully');
+                const cartData = await response.json();
+                console.log('✅ Added to cart successfully:', cartData);
+                
+                // Sepete eklendikten sonra fiyat güncellemesi yap
+                await updateCartItemPrice(cartData.key, config.price);
+                
+                // Sepet sayfasına yönlendir
+                window.location.href = '/cart';
+            } else {
+                console.warn('⚠️ Cart API failed, redirecting anyway');
+                window.location.href = '/cart';
+            }
+            
+        } catch (error) {
+            console.error('❌ Store message handler error:', error);
+            alert('Sepete ekleme hatası: ' + error.message);
+        }
+    }
+    
+    // Ana ürün fiyatını güncelle
+    function updateMainProductPrice(newPrice) {
+        console.log('💰 Updating main product price to:', newPrice);
+        
+        // Fiyat elementlerini bul ve güncelle
+        const priceSelectors = [
+            '.price',
+            '.product-price',
+            '.price__current',
+            '.money',
+            '[data-product-price]',
+            '.product__price',
+            '.price-item--current'
+        ];
+        
+        priceSelectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                if (element && element.textContent.includes('₺') || element.textContent.includes('TL')) {
+                    element.textContent = newPrice + '₺';
+                    element.setAttribute('data-original-price', element.textContent);
+                    console.log('Updated price element:', selector, 'to:', newPrice + '₺');
+                }
+            });
+        });
+        
+        // Meta tag'leri de güncelle (sosyal medya paylaşımları için)
+        updateMetaTags(newPrice);
+    }
+    
+    // Meta tag'leri güncelle
+    function updateMetaTags(price) {
+        const productPrice = price + '.00';
+        
+        // Open Graph ve Twitter Card meta tag'lerini güncelle
+        const metaSelectors = [
+            'meta[property="product:price:amount"]',
+            'meta[property="og:price:amount"]',
+            'meta[name="twitter:data1"]'
+        ];
+        
+        metaSelectors.forEach(selector => {
+            const meta = document.querySelector(selector);
+            if (meta) {
+                meta.setAttribute('content', productPrice);
+            }
+        });
+    }
+    
+    // Sepet item fiyatını güncelle (AJAX ile)
+    async function updateCartItemPrice(itemKey, newPrice) {
+        console.log('🛒 Updating cart item price:', itemKey, newPrice);
+        
+        try {
+            // Shopify Cart Update API kullan
+            const updateData = {
+                updates: {},
+                attributes: {
+                    'custom_price_' + itemKey: newPrice + '₺'
+                }
+            };
+            
+            const response = await fetch('/cart/update.js', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            if (response.ok) {
+                console.log('✅ Cart item price updated successfully');
+            } else {
+                console.warn('⚠️ Cart price update failed, but item was added');
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ Cart price update error:', error);
+        }
+    }
                 window.location.href = '/cart';
             } else {
                 // Cart API hatası - sadece redirect yap
@@ -186,17 +295,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const materialInfoSpan = document.querySelector('#block-' + blockId + ' .material-info');
   const addBtn = document.querySelector('#block-' + blockId + ' .add-to-cart-btn');
   
-  console.log('Product Configurator initialized for block:', blockId);
-  console.log('Elements found:', { height, width, material, priceDisplay, priceSpan, addBtn });
-  
   function calculatePrice() {
-    console.log('Calculating price...');
-    
     const h = parseInt(height?.value || 0);
     const w = parseInt(width?.value || 0);
     const mat = material?.value;
-    
-    console.log('Values:', { height: h, width: w, material: mat });
     
     // Alan hesaplama (her zaman göster)
     const area = (h * w) / 10000; // cm² to m²
@@ -250,6 +352,9 @@ document.addEventListener('DOMContentLoaded', function() {
       
       console.log('Price updated to:', totalPrice.toFixed(2) + '₺');
       
+      // ÖNEMLİ: Ana sayfadaki ürün fiyatını da güncelle!
+      updateMainProductPriceFromConfigurator(totalPrice.toFixed(0));
+      
     } else if (h > 0 && w > 0 && !mat) {
       // Boy ve en var ama materyal yok
       if (priceSpan) {
@@ -258,6 +363,9 @@ document.addEventListener('DOMContentLoaded', function() {
       if (addBtn) {
         addBtn.disabled = true;
       }
+      
+      // Fiyat belirsizken ana fiyatı sıfırla
+      resetMainProductPrice();
       
     } else if (mat && (!h || !w || h <= 0 || w <= 0)) {
       // Materyal var ama ölçüler eksik
@@ -303,13 +411,30 @@ document.addEventListener('DOMContentLoaded', function() {
   
   if (addBtn) {
     addBtn.addEventListener('click', function() {
-      console.log('Add to cart clicked');
+      
+      // Konfigürasyon objesi oluştur - hesaplanan fiyatla
+      const area = ((height?.value || 0) * (width?.value || 0)) / 10000; // m² cinsinden
+      const materialPrice = material?.value ? { wood: 25, metal: 35, pvc: 20, glass: 45 }[material.value] : 0;
+      
+      // Alan katsayısı hesapla
+      let areaMultiplier = 1.0;
+      if (area < 0.1) areaMultiplier = 1.5;
+      else if (area < 0.5) areaMultiplier = 1.2;
+      else if (area < 2) areaMultiplier = 1.0;
+      else if (area < 5) areaMultiplier = 0.9;
+      else areaMultiplier = 0.8;
+      
+      // Hesaplanan fiyat
+      const calculatedPrice = area * materialPrice * areaMultiplier;
       
       const config = {
         height: height?.value,
         width: width?.value,
         material: material?.value,
-        price: priceSpan?.textContent,
+        area: area.toFixed(4),
+        price: calculatedPrice.toFixed(0), // Tam sayı olarak
+        priceText: calculatedPrice.toFixed(0) + '₺',
+        materialText: material?.selectedOptions[0]?.textContent || 'Bilinmiyor',
         productId: '{{ product.id | default: "unknown" }}'
       };
       
@@ -347,7 +472,163 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(calculatePrice, 100);
 });
 
+// Ana sayfa fiyat güncelleme fonksiyonları
+function updateMainProductPriceFromConfigurator(newPrice) {
+  // Ana ürün fiyat elementlerini bul ve güncelle
+  const priceSelectors = [
+    '.price',
+    '.product-price', 
+    '.price__current',
+    '.money',
+    '[data-product-price]',
+    '.product__price',
+    '.price-item--current',
+    '.product-form__price',
+    '.product__price .money'
+  ];
+  
+  let updated = false;
+  
+  priceSelectors.forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(element => {
+      if (element && (element.textContent.includes('₺') || element.textContent.includes('TL') || element.textContent.includes('100'))) {
+        // Orijinal fiyatı sakla
+        if (!element.getAttribute('data-original-price')) {
+          element.setAttribute('data-original-price', element.textContent);
+        }
+        
+        element.textContent = newPrice + '₺';
+        element.style.color = '#e74c3c';
+        element.style.fontWeight = 'bold';
+        updated = true;
+      }
+    });
+  });
+}
+
+function resetMainProductPrice() {
+  const priceElements = document.querySelectorAll('[data-original-price]');
+  priceElements.forEach(element => {
+    const originalPrice = element.getAttribute('data-original-price');
+    if (originalPrice) {
+      element.textContent = originalPrice;
+      element.style.color = '';
+      element.style.fontWeight = '';
+    }
+  });
+}
+
 // Theme Extension Ready - Simple postMessage approach
+</script>
+
+<!-- Sepet fiyat güncelleyici script -->
+<script>
+// Sepet sayfası için fiyat güncelleyici
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🛒 Cart price updater loaded');
+  
+  // Sepet sayfasında mı kontrol et
+  if (!window.location.pathname.includes('/cart')) {
+    return;
+  }
+  
+  updateCartTotals();
+  
+  // Quantity değişikliklerini dinle
+  const quantityInputs = document.querySelectorAll('input[name="updates[]"], .cart-item__quantity input');
+  quantityInputs.forEach(input => {
+    input.addEventListener('change', () => {
+      setTimeout(updateCartTotals, 500);
+    });
+  });
+});
+
+function updateCartTotals() {
+  console.log('💰 Updating cart totals...');
+  
+  let totalCalculated = 0;
+  
+  // Her sepet item'ını kontrol et
+  const cartItems = document.querySelectorAll('[data-cart-item], .cart-item, .cart__item');
+  
+  cartItems.forEach((item, index) => {
+    console.log('🔍 Processing cart item:', index);
+    
+    // Quantity bul
+    const quantityInput = item.querySelector('input[name="updates[]"], .cart-item__quantity input, input[type="number"]');
+    const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
+    
+    // Properties içinde hesaplanan fiyatı ara
+    const properties = item.querySelectorAll('p, span, div');
+    let calculatedPrice = null;
+    
+    properties.forEach(prop => {
+      const text = prop.textContent || '';
+      
+      // "Fiyat: 400.00₺" formatını ara
+      if (text.includes('Fiyat:') && (text.includes('₺') || text.includes('TL'))) {
+        const priceMatch = text.match(/Fiyat:\s*([0-9]+(?:\.[0-9]+)?)/);
+        if (priceMatch) {
+          calculatedPrice = parseFloat(priceMatch[1]);
+          console.log('💵 Found calculated price:', calculatedPrice, 'for quantity:', quantity);
+        }
+      }
+    });
+    
+    if (calculatedPrice) {
+      totalCalculated += calculatedPrice * quantity;
+      
+      // Bu item'ın toplam fiyatını güncelle
+      const itemTotalElements = item.querySelectorAll('.cart-item__total, .cart-item__price, .money, [data-cart-item-price]');
+      itemTotalElements.forEach(element => {
+        if (element.textContent.includes('100.00') || element.textContent.includes('TL') || element.textContent.includes('₺')) {
+          element.textContent = (calculatedPrice * quantity).toFixed(2) + '₺';
+          element.style.color = '#e74c3c';
+          element.style.fontWeight = 'bold';
+        }
+      });
+    }
+  });
+  
+  if (totalCalculated > 0) {
+    console.log('🎯 Total calculated price:', totalCalculated);
+    
+    // Sepet toplamını güncelle
+    const totalSelectors = [
+      '.cart__total',
+      '.cart-total',
+      '.totals__total',
+      '[data-cart-total]',
+      '.cart-subtotal__price',
+      '.cart__footer .money',
+      '.cart-footer .money'
+    ];
+    
+    totalSelectors.forEach(selector => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach(element => {
+        if (element && (element.textContent.includes('100.00') || element.textContent.includes('200.00'))) {
+          element.textContent = totalCalculated.toFixed(2) + '₺';
+          element.style.color = '#e74c3c';
+          element.style.fontWeight = 'bold';
+          
+          console.log('✅ Updated total to:', totalCalculated.toFixed(2) + '₺');
+        }
+      });
+    });
+  }
+}
+
+// Checkout butonunu dinle ve fiyat uyarısı göster
+document.addEventListener('click', function(e) {
+  if (e.target.matches('.btn--checkout, [name="add"], .cart__checkout-button, .checkout-button')) {
+    console.log('🛒 Checkout clicked - prices should be updated');
+    
+    // Son bir kez fiyatları güncelle
+    setTimeout(updateCartTotals, 100);
+  }
+});
 </script>
 
 {% schema %}

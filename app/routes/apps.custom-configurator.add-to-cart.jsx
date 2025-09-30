@@ -23,7 +23,7 @@ const PRICING_RULES = {
     }
 };
 
-// Fiyat hesaplama fonksiyonu
+// Fiyat hesaplama
 function calculatePrice(height, width, material) {
     const area = (height * width) / 10000; // cm² to m²
 
@@ -46,7 +46,7 @@ function calculatePrice(height, width, material) {
     return area * materialPrice * sizeRule.multiplier;
 }
 
-// Geçici ürün oluşturma fonksiyonu
+// Geçici ürün oluşturma
 async function createTemporaryProduct(admin, config) {
     const { height, width, material } = config;
 
@@ -106,7 +106,7 @@ async function createTemporaryProduct(admin, config) {
         throw new Error("Ürün oluşturulamadı");
     }
 
-    // Task 11: Silme zamanını kaydet
+    // Silme zamanını kaydet
     const cleanup = new TemporaryProductCleanup(admin);
     const productIdNumber = product.id.replace('gid://shopify/Product/', '');
     await cleanup.markProductForCleanup(productIdNumber);
@@ -114,7 +114,7 @@ async function createTemporaryProduct(admin, config) {
     return product;
 }
 
-// Task 10: Sepete ekleme fonksiyonu
+// Sepete ekleme
 async function addToCart(admin, product, config) {
     const { height, width, material } = config;
 
@@ -148,7 +148,7 @@ export async function action({ request }) {
     try {
         const { admin } = await authenticate.admin(request);
 
-        // Task 12: Cleanup sistemini başlat (ilk authentication'da)
+        // Cleanup sistemini başlat
         await startUserCleanup(admin);
 
         const formData = await request.json();
@@ -159,12 +159,12 @@ export async function action({ request }) {
 
         // Validasyon
         if (!height || !width || !material) {
-            console.log("❌ Validation failed: Missing fields");
+            console.log("Validation failed: Missing fields");
             return json({ success: false, error: "Tüm alanları doldurun" }, { status: 400 });
         }
 
         if (height < 10 || height > 500 || width < 10 || width > 500) {
-            console.log("❌ Validation failed: Invalid dimensions");
+            console.log("Validation failed: Invalid dimensions");
             return json({ success: false, error: "Ölçüler 10-500 cm arasında olmalıdır" }, { status: 400 });
         }
 
@@ -177,10 +177,10 @@ export async function action({ request }) {
         };
 
         const mappedMaterial = materialMapping[material] || material;
-        console.log("🔄 Material mapping:", material, "->", mappedMaterial);
+        console.log("Material mapping:", material, "->", mappedMaterial);
 
-        // Task 9: Geçici ürün oluştur
-        console.log("🚀 Creating temporary product...");
+        // Geçici ürün oluştur
+        console.log("Creating temporary product...");
         const tempProduct = await createTemporaryProduct(admin, {
             height: parseInt(height),
             width: parseInt(width),
@@ -188,9 +188,9 @@ export async function action({ request }) {
             baseProductId: productId
         });
 
-        console.log("✅ Temporary product created:", tempProduct.id);
+        console.log("Temporary product created:", tempProduct.id);
 
-        // Task 10: Sepete ekle & kullanıcı bilgilerini iliştir
+        // Sepete ekle & kullanıcı bilgilerini iliştir
         console.log("🛒 Adding to cart...");
         const cartResult = await addToCart(admin, tempProduct, {
             height: parseInt(height),
@@ -198,7 +198,7 @@ export async function action({ request }) {
             material: mappedMaterial // Mapped material kullan
         });
 
-        console.log("✅ Cart result:", cartResult);
+        console.log("Cart result:", cartResult);
 
         // Başarılı response
         return json({
@@ -210,8 +210,8 @@ export async function action({ request }) {
         });
 
     } catch (error) {
-        console.error("❌ Custom configurator error:", error);
-        console.error("❌ Stack trace:", error.stack);
+        console.error("Custom configurator error:", error);
+        console.error("Stack trace:", error.stack);
 
         // Detailed error response
         return json({
