@@ -236,52 +236,6 @@ async function dailyCleanupScan(admin) {
   }
 }
 
-// Zamanlayıcı endpoint
-export async function action({ request }) {
-  try {
-    const { admin } = await authenticate.admin(request);
-
-    const body = await request.json();
-    const { action: actionType } = body;
-
-    let result = {};
-
-    if (actionType === 'cleanup') {
-      // Normal temizlik (2 saat sonra)
-      const cleanedProducts = await cleanupExpiredProducts(admin);
-      result = {
-        success: true,
-        action: 'cleanup',
-        cleanedCount: cleanedProducts.length,
-        cleanedProducts
-      };
-    } else if (actionType === 'daily-scan') {
-      // Günlük tarama (24 saat sonra)
-      const deletedProducts = await dailyCleanupScan(admin);
-      result = {
-        success: true,
-        action: 'daily-scan',
-        deletedCount: deletedProducts.length,
-        deletedProducts
-      };
-    } else {
-      return json({
-        success: false,
-        error: "Geçersiz aksiyon. 'cleanup' veya 'daily-scan' kullanın."
-      }, { status: 400 });
-    }
-
-    return json(result);
-
-  } catch (error) {
-    console.error("Cleanup endpoint error:", error);
-    return json({
-      success: false,
-      error: error.message || "Temizlik işlemi başarısız"
-    }, { status: 500 });
-  }
-}
-
 // Durumu kontrol etme endpoint
 export async function loader({ request }) {
   try {
