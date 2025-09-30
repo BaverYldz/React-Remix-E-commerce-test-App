@@ -1,56 +1,17 @@
 # Shopify Product Configurator
 
-React/Remix tabanlı dinamik ürün konfigürasyon uygulaması. Kullanıcılar boy, en ve materyal seçerek özel ürünler oluşturabilir, hesaplanan fiyatla sepete ekleyebilir.
+React/Remix tabanlı dinamik ürün konfigürasyon uygula## Workflowlanıcılar boy, en ve materyal seçerek özel ürünler oluşturabilir, hesaplanan fiyatla sepete ekleyebilir.
 
-## 🚀 Özellikler
 
-### Ürün Konfigürasyonu
-- **Dinamik Form**: Boy, en ve materyal seçimi
-- **Gerçek Zamanlı Fiyatlandırma**: Seçimlere göre anında fiyat hesaplama
-- **Materyal Seçenekleri**: Ahşap, Metal, PVC, Cam
-- **Alan Hesaplama**: Boyut tabanlı katsayı sistemi
 
-### Tema Entegrasyonu
-- **Theme App Extension**: Ürün sayfalarına entegre blok
-- **Mevcut Varyant Gizleme**: Standart varyant seçicilerinin devre dışı bırakılması
-- **Responsive Tasarım**: Mobil ve masaüstü uyumlu
-
-### Sepet Yönetimi
-- **Geçici Ürün Oluşturma**: Özel konfigürasyonlar için dinamik varyant oluşturma
-- **Otomatik Sepet Ekleme**: Hesaplanan fiyat ve detaylarla sepete ekleme
-- **Özel Properties**: Konfigürasyon bilgilerinin sepet notlarında saklanması
-
-### Otomatik Temizlik Sistemi
-- **2 Saat Otomatik Silme**: Geçici ürünlerin zaman tabanlı temizliği
-- **Metafield Takibi**: Silme zamanı ve durumun saklanması
-- **Güvenli Silme**: Sipariş verilmiş ürünlerin korunması
-- **Günlük Tarama**: 24 saatlik güvenlik taraması
-
-### Görünürlük Kontrolü
-- **Vitrin Gizleme**: Geçici ürünlerin katalogda görünmemesi
-- **SEO Optimizasyonu**: Search engine'lerden gizleme
-- **Tag Yönetimi**: Otomatik etiketleme sistemi
-
-### Hata Yönetimi
-- **Retry Mekanizması**: Başarısız işlemlerde otomatik yeniden deneme
-- **Kullanıcı Bildirimleri**: Anlaşılır hata mesajları
-- **Duplicate Prevention**: Çoklu ürün oluşturma engelleme
-- **Rate Limiting**: API çağrı sınırlandırması
-
-### İzleme ve Logging
-- **Operasyon Kayıtları**: Tüm işlemlerin detaylı loglanması
-- **Sistem Sağlık Kontrolü**: Otomatik durum takibi
-- **Alert Sistemi**: Kritik hataların bildirilmesi
-- **Dashboard**: Admin panel entegrasyonu
-
-## 🛠️ Kurulum
+##  Kurulum
 
 ```bash
 npm install
 npm run dev
 ```
 
-## 📋 Kullanım
+##  Kullanım
 
 1. **Uygulama Kurulumu**
    - Shopify admin panelinden uygulamayı kurun
@@ -65,7 +26,7 @@ npm run dev
    - "Sepete Ekle" butonuna tıklayın
    - Konfigürasyon detayları ile sepete yönlendirileceksiniz
 
-## 🎯 Teknik Detaylar
+##  Teknik Detaylar
 
 ### Fiyat Hesaplama
 ```javascript
@@ -89,7 +50,7 @@ const price = area * materialPrice * areaMultiplier;
 - **Günlük tarama**: 24 saat+ eski ürünler
 - **5 dakika aralıklarla** kontrol
 
-## 📁 Proje Yapısı
+##  Proje Yapısı
 
 ```
 app/
@@ -110,8 +71,32 @@ extensions/
     └── shopify.extension.toml          # Extension yapılandırması
 ```
 
-## 🔧 API Endpoints
+##  API Endpoints
 
 - `POST /apps/configurator/add-to-cart` - Sepete ekleme
 - `POST /apps/cleanup/manual` - Manuel temizlik
 - `GET /apps/task-overview` - Sistem durumu
+- `POST /apps/test/*` - Test endpoints
+
+##  Güvenlik
+
+- Geçici ürünler DRAFT durumunda
+- Metafield tabanlı güvenli veri saklama
+- API rate limiting koruması
+- Sipariş güvenliği (silinse bile order korunur)
+
+##  Monitoring
+
+- Gerçek zamanlı sistem sağlık durumu
+- Operasyon logları ve metrikler
+- Hata takibi ve alerting
+- Performance monitoring
+
+
+##  Workflow
+
+1. **Kullanıcı konfigürasyon yapar** → Gerçek zamanlı fiyat hesaplanır
+2. **Sepete ekle tıklanır** → Geçici ürün oluşturulur
+3. **Sepete yönlendirilir** → Konfigürasyon detayları görünür
+4. **2 saat sonra** → Otomatik temizlik çalışır
+5. **24 saat sonra** → Güvenlik taraması yapılır
