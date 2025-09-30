@@ -19,20 +19,20 @@ export async function action({ request }) {
                 const monitor = new OperationMonitor(admin);
                 result = await monitor.performDailyCleanup();
                 break;
-                
+
             case 'manual_cleanup':
                 // Import dinamik olarak
                 const { TemporaryProductCleanup } = await import('../cleanup-system');
                 const cleanup = new TemporaryProductCleanup(admin);
                 result = await cleanup.runCleanup();
                 break;
-                
+
             case 'health_check':
                 const { OperationMonitor: HealthMonitor } = await import('../operation-monitor');
                 const healthMonitor = new HealthMonitor(admin);
                 result = await healthMonitor.checkSystemHealth();
                 break;
-                
+
             case 'generate_report':
                 const { OperationMonitor: ReportMonitor } = await import('../operation-monitor');
                 const reportMonitor = new ReportMonitor(admin);
@@ -41,7 +41,7 @@ export async function action({ request }) {
                     report: reportMonitor.generateDailyReport()
                 };
                 break;
-                
+
             case 'export_logs':
                 const hours = parseInt(formData.get('hours')) || 24;
                 const { OperationMonitor: LogMonitor } = await import('../operation-monitor');
@@ -51,7 +51,7 @@ export async function action({ request }) {
                     export: logMonitor.exportLogs('all', hours)
                 };
                 break;
-                
+
             default:
                 // Fallback to simple cleanup
                 result = await simpleCleanup(admin);
@@ -93,7 +93,7 @@ async function simpleCleanup(admin) {
 
         const data = await response.json();
         const products = data.data?.products?.edges || [];
-        
+
         let deleted = 0;
         const twoHoursAgo = new Date();
         twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
@@ -119,7 +119,7 @@ async function simpleCleanup(admin) {
                             input: { id: product.id }
                         }
                     });
-                    
+
                     deleted++;
                     console.log(`✅ Deleted expired product: ${product.title}`);
                 } catch (deleteError) {
@@ -150,10 +150,10 @@ export default function DailyCleanupScheduler() {
             <h1>Günlük Temizlik Scheduler</h1>
             <p>Task 17: Otomatik günlük temizlik ve sistem izleme</p>
 
-            <div style={{ 
-                marginBottom: '20px', 
-                padding: '15px', 
-                backgroundColor: '#e8f4fd', 
+            <div style={{
+                marginBottom: '20px',
+                padding: '15px',
+                backgroundColor: '#e8f4fd',
                 borderRadius: '5px',
                 border: '1px solid #bde0ff'
             }}>
@@ -172,25 +172,25 @@ export default function DailyCleanupScheduler() {
                     label="Manuel Temizlik"
                     description="2 saat+ eski ürünleri sil"
                 />
-                
+
                 <SchedulerButton
                     operation="daily_cleanup"
                     label="Günlük Temizlik"
                     description="24 saat+ eski ürünleri sil"
                 />
-                
+
                 <SchedulerButton
                     operation="health_check"
                     label="Sağlık Kontrolü"
                     description="Sistem durumunu kontrol et"
                 />
-                
+
                 <SchedulerButton
                     operation="generate_report"
                     label="Günlük Rapor"
                     description="24 saatlik aktivite raporu"
                 />
-                
+
                 <SchedulerButton
                     operation="export_logs"
                     label="Log Export"
@@ -203,11 +203,11 @@ export default function DailyCleanupScheduler() {
                 <div style={{ padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '5px' }}>
                     <label style={{ display: 'block', marginBottom: '10px' }}>
                         <strong>Log Export Süresi (saat):</strong>
-                        <input 
-                            type="number" 
-                            id="logHours" 
-                            defaultValue="24" 
-                            min="1" 
+                        <input
+                            type="number"
+                            id="logHours"
+                            defaultValue="24"
+                            min="1"
                             max="168"
                             style={{ marginLeft: '10px', padding: '5px', width: '80px' }}
                         />
@@ -215,10 +215,10 @@ export default function DailyCleanupScheduler() {
                 </div>
             </div>
 
-            <div id="schedulerResults" style={{ 
-                marginTop: '20px', 
-                padding: '15px', 
-                backgroundColor: '#f8f9fa', 
+            <div id="schedulerResults" style={{
+                marginTop: '20px',
+                padding: '15px',
+                backgroundColor: '#f8f9fa',
                 borderRadius: '5px',
                 display: 'none'
             }}>
@@ -226,10 +226,10 @@ export default function DailyCleanupScheduler() {
                 <div id="schedulerContent"></div>
             </div>
 
-            <div style={{ 
-                marginTop: '30px', 
-                padding: '15px', 
-                backgroundColor: '#fff3cd', 
+            <div style={{
+                marginTop: '30px',
+                padding: '15px',
+                backgroundColor: '#fff3cd',
                 borderRadius: '5px',
                 border: '1px solid #ffeaa7'
             }}>
@@ -249,26 +249,26 @@ function SchedulerButton({ operation, label, description }) {
     const handleOperation = async () => {
         const resultsDiv = document.getElementById('schedulerResults');
         const contentDiv = document.getElementById('schedulerContent');
-        
+
         resultsDiv.style.display = 'block';
         contentDiv.innerHTML = '<p>İşlem çalışıyor...</p>';
-        
+
         try {
             const formData = new FormData();
             formData.append('operation', operation);
-            
+
             if (operation === 'export_logs') {
                 const hours = document.getElementById('logHours').value;
                 formData.append('hours', hours);
             }
-            
+
             const response = await fetch('/apps/cleanup-scheduler-new', {
                 method: 'POST',
                 body: formData
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 let content = `
                     <div style="color: green; marginBottom: 10px;">
@@ -312,7 +312,7 @@ ${JSON.stringify(result.result, null, 2)}
                     </div>
                 `;
             }
-            
+
         } catch (error) {
             contentDiv.innerHTML = `
                 <div style="color: red; marginBottom: 10px;">

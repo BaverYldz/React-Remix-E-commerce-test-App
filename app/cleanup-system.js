@@ -16,7 +16,7 @@ export class TemporaryProductCleanup {
     // Silme zamanını kaydet
     async markProductForCleanup(productId, customData = {}) {
         const operationId = `mark_cleanup_${productId}_${Date.now()}`;
-        
+
         try {
             const expiryTime = new Date();
             expiryTime.setHours(expiryTime.getHours() + this.EXPIRY_HOURS);
@@ -101,7 +101,7 @@ export class TemporaryProductCleanup {
 
         } catch (error) {
             console.error('Failed to mark product for cleanup:', error);
-            
+
             // Hata loglama
             this.logOperation('PRODUCT_MARK_FAILED', {
                 productId,
@@ -110,7 +110,7 @@ export class TemporaryProductCleanup {
             });
 
             const formattedError = this.errorHandler.formatUserError(error, 'product_marking');
-            
+
             return {
                 success: false,
                 productId,
@@ -188,11 +188,11 @@ export class TemporaryProductCleanup {
 
         } catch (error) {
             console.error('Failed to find expired products:', error);
-            
+
             this.logOperation('FIND_EXPIRED_FAILED', {
                 error: error.message
             });
-            
+
             return [];
         }
     }
@@ -206,14 +206,14 @@ export class TemporaryProductCleanup {
 
             if (expiredProducts.length === 0) {
                 console.log('✨ No expired products to clean up');
-                
+
                 this.logOperation('CLEANUP_COMPLETED', {
                     deleted: 0,
                     errors: 0,
                     total: 0,
                     reason: 'no_expired_products'
                 });
-                
+
                 return { deleted: 0, errors: 0, total: 0 };
             }
 
@@ -269,7 +269,7 @@ export class TemporaryProductCleanup {
                 if (retryResult.success) {
                     console.log(`Successfully deleted product: ${product.title}`);
                     deleted++;
-                    
+
                     deletionResults.push({
                         productId: product.id,
                         title: product.title,
@@ -279,7 +279,7 @@ export class TemporaryProductCleanup {
                 } else {
                     console.error(`Failed to delete product ${product.id}:`, retryResult.error);
                     errors++;
-                    
+
                     deletionResults.push({
                         productId: product.id,
                         title: product.title,
@@ -304,20 +304,20 @@ export class TemporaryProductCleanup {
                 efficiency: deleted / expiredProducts.length * 100
             });
 
-            return { 
-                deleted, 
-                errors, 
+            return {
+                deleted,
+                errors,
                 total: expiredProducts.length,
-                results: deletionResults 
+                results: deletionResults
             };
 
         } catch (error) {
             console.error('Cleanup process failed:', error);
-            
+
             this.logOperation('CLEANUP_FAILED', {
                 error: error.message
             });
-            
+
             return {
                 deleted: 0,
                 errors: 1,

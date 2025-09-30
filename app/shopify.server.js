@@ -45,18 +45,18 @@ export async function initializeCleanupSystem(admin) {
 
   try {
     console.log('Initializing cleanup system...');
-    
+
     // Dinamik import kullan
     const { startCleanupScheduler } = await import('./cleanup-system');
-    
+
     // 5 dakikada bir cleanup çalıştır
     const cleanupInterval = startCleanupScheduler(admin, 5);
-    
+
     // Cleanup sistemi başlatıldığını işaretle
     cleanupSystemInitialized = true;
-    
+
     console.log('Cleanup system initialized successfully');
-    
+
     // Graceful shutdown için cleanup
     process.on('SIGTERM', () => {
       console.log('🛑 Stopping cleanup system...');
@@ -64,7 +64,7 @@ export async function initializeCleanupSystem(admin) {
         clearInterval(cleanupInterval);
       }
     });
-    
+
     return true;
   } catch (error) {
     console.error('Failed to initialize cleanup system:', error);

@@ -45,10 +45,10 @@ export async function action({ request }) {
         if (testType === 'all' || testType === 'health') {
             console.log('\n=== System Health Check ===');
             const cleanup = new TemporaryProductCleanup(admin);
-            
+
             // Son 24 saatteki logları export et
             const logs = cleanup.exportLogs(24);
-            
+
             results.healthCheck = {
                 timestamp: new Date().toISOString(),
                 logExport: logs,
@@ -110,7 +110,7 @@ function generateTestSummary(results) {
         }
     });
 
-    summary.successRate = summary.totalTests > 0 
+    summary.successRate = summary.totalTests > 0
         ? (summary.passedTests / summary.totalTests * 100).toFixed(1) + '%'
         : '0%';
 
@@ -134,42 +134,42 @@ export default function Task11To18TestPage() {
             </div>
 
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                <TestButton 
-                    label="Tüm Testler" 
-                    testType="all" 
+                <TestButton
+                    label="Tüm Testler"
+                    testType="all"
                     description="Tüm sistemleri test et"
                 />
-                <TestButton 
-                    label="Cleanup Tests" 
-                    testType="cleanup" 
+                <TestButton
+                    label="Cleanup Tests"
+                    testType="cleanup"
                     description="Task 11-13 testleri"
                 />
-                <TestButton 
-                    label="Visibility Tests" 
-                    testType="visibility" 
+                <TestButton
+                    label="Visibility Tests"
+                    testType="visibility"
                     description="Task 14 testleri"
                 />
-                <TestButton 
-                    label="Error Tests" 
-                    testType="errors" 
+                <TestButton
+                    label="Error Tests"
+                    testType="errors"
                     description="Task 15-16 testleri"
                 />
-                <TestButton 
-                    label="Monitoring Tests" 
-                    testType="monitoring" 
+                <TestButton
+                    label="Monitoring Tests"
+                    testType="monitoring"
                     description="Task 17-18 testleri"
                 />
-                <TestButton 
-                    label="Health Check" 
-                    testType="health" 
+                <TestButton
+                    label="Health Check"
+                    testType="health"
                     description="Sistem sağlık kontrolü"
                 />
             </div>
 
-            <div id="testResults" style={{ 
-                marginTop: '20px', 
-                padding: '15px', 
-                backgroundColor: '#f0f0f0', 
+            <div id="testResults" style={{
+                marginTop: '20px',
+                padding: '15px',
+                backgroundColor: '#f0f0f0',
                 borderRadius: '5px',
                 display: 'none'
             }}>
@@ -184,22 +184,22 @@ function TestButton({ label, testType, description }) {
     const handleTest = async () => {
         const resultsDiv = document.getElementById('testResults');
         const contentDiv = document.getElementById('resultContent');
-        
+
         // Loading state
         resultsDiv.style.display = 'block';
         contentDiv.innerHTML = '<p>Test çalışıyor, lütfen bekleyin...</p>';
-        
+
         try {
             const formData = new FormData();
             formData.append('testType', testType);
-            
+
             const response = await fetch('/apps/task-11-18-tests', {
                 method: 'POST',
                 body: formData
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 contentDiv.innerHTML = `
                     <div style="color: green; marginBottom: 10px;">
@@ -235,7 +235,7 @@ ${JSON.stringify(result.results, null, 2)}
                     </div>
                 `;
             }
-            
+
         } catch (error) {
             contentDiv.innerHTML = `
                 <div style="color: red; marginBottom: 10px;">

@@ -15,7 +15,7 @@ export class OperationMonitor {
     // Günlük temizlik taraması
     async performDailyCleanup() {
         console.log('🗓️ Starting daily cleanup scan...');
-        
+
         const startTime = new Date();
         const logEntry = {
             id: `daily_cleanup_${Date.now()}`,
@@ -23,26 +23,26 @@ export class OperationMonitor {
             startTime: startTime.toISOString(),
             status: 'RUNNING'
         };
-        
+
         this.addLog(logEntry);
-        
+
         try {
             // 1. Tüm geçici ürünleri bul
             const allTempProducts = await this.findAllTemporaryProducts();
-            
+
             // 2. 24 saat+ olanları belirle
             const oldProducts = this.filterOldProducts(allTempProducts, 24);
-            
+
             // 3. Cleanup sistemi ile temizle
             const { TemporaryProductCleanup } = await import('./cleanup-system.js');
             const cleanup = new TemporaryProductCleanup(this.admin);
-            
+
             const cleanupResult = await cleanup.deleteExpiredProducts();
-            
+
             // 4. Sonuçları logla
             const endTime = new Date();
             const duration = endTime - startTime;
-            
+
             logEntry.status = 'COMPLETED';
             logEntry.endTime = endTime.toISOString();
             logEntry.duration = duration;
@@ -53,35 +53,35 @@ export class OperationMonitor {
                 errors: cleanupResult.errors,
                 efficiency: cleanupResult.deleted / Math.max(oldProducts.length, 1) * 100
             };
-            
+
             this.updateLog(logEntry);
-            
+
             // 5. Alert kontrolü
             if (cleanupResult.errors > 0) {
                 this.createAlert('CLEANUP_ERRORS', `Daily cleanup had ${cleanupResult.errors} errors`, 'warning');
             }
-            
+
             if (allTempProducts.length > this.thresholds.maxTempProductsAlert) {
                 this.createAlert('HIGH_TEMP_PRODUCTS', `${allTempProducts.length} temporary products found (threshold: ${this.thresholds.maxTempProductsAlert})`, 'warning');
             }
-            
+
             console.log(`✅ Daily cleanup completed: ${cleanupResult.deleted} deleted, ${cleanupResult.errors} errors`);
-            
+
             return {
                 success: true,
                 ...logEntry
             };
-            
+
         } catch (error) {
             console.error('❌ Daily cleanup failed:', error);
-            
+
             logEntry.status = 'FAILED';
             logEntry.error = error.message;
             logEntry.endTime = new Date().toISOString();
-            
+
             this.updateLog(logEntry);
             this.createAlert('DAILY_CLEANUP_FAILED', `Daily cleanup failed: ${error.message}`, 'critical');
-            
+
             return {
                 success: false,
                 error: error.message,
@@ -97,16 +97,16 @@ export class OperationMonitor {
             timestamp: entry.timestamp || new Date().toISOString(),
             id: entry.id || `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         };
-        
+
         this.logs.push(logEntry);
-        
+
         // Log boyutunu sınırla (son 1000 entry)
         if (this.logs.length > 1000) {
             this.logs.shift();
         }
-        
+
         console.log(`📝 LOG [${logEntry.type}]:`, logEntry);
-        
+
         return logEntry.id;
     }
 
@@ -129,16 +129,16 @@ export class OperationMonitor {
             status: 'active',
             acknowledged: false
         };
-        
+
         this.alerts.push(alert);
-        
+
         // Alert boyutunu sınırla (son 100 alert)
         if (this.alerts.length > 100) {
             this.alerts.shift();
         }
-        
+
         console.log(`🚨 ALERT [${severity.toUpperCase()}] ${type}:`, message);
-        
+
         // Critical alertler için ek loglama
         if (severity === 'critical') {
             this.addLog({
@@ -148,7 +148,7 @@ export class OperationMonitor {
                 message: message
             });
         }
-        
+
         return alert.id;
     }
 
@@ -167,12 +167,12 @@ export class OperationMonitor {
     // Performans izleme
     async checkSystemHealth() {
         console.log('🔍 Checking system health...');
-        
+
         const healthCheck = {
             timestamp: new Date().toISOString(),
             checks: {}
         };
-        
+
         try {
             // 1. Geçici ürün sayısı
             const tempProducts = await this.findAllTemporaryProducts();
@@ -181,7 +181,7 @@ export class OperationMonitor {
                 count: tempProducts.length,
                 threshold: this.thresholds.maxTempProductsAlert
             };
-            
+
             // 2. Son 24 saatteki hata sayısı
             const recentErrors = this.getRecentErrors(24);
             healthCheck.checks.errorRate = {
@@ -189,44 +189,44 @@ export class OperationMonitor {
                 count: recentErrors.length,
                 threshold: this.thresholds.maxErrorsPerHour * 24
             };
-            
+
             // 3. Son cleanup durumu
             const lastCleanup = this.logs
                 .filter(log => log.type === 'DAILY_CLEANUP')
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-                
+
             healthCheck.checks.lastCleanup = {
                 status: lastCleanup && lastCleanup.status === 'COMPLETED' ? 'healthy' : 'warning',
                 lastRun: lastCleanup?.timestamp || 'never',
                 success: lastCleanup?.status === 'COMPLETED'
             };
-            
+
             // 4. Aktif alertler
             const activeAlerts = this.alerts.filter(a => a.status === 'active' && !a.acknowledged);
             healthCheck.checks.activeAlerts = {
                 status: activeAlerts.length === 0 ? 'healthy' : 'warning',
                 count: activeAlerts.length
             };
-            
+
             // Genel durum
             const allChecksHealthy = Object.values(healthCheck.checks)
                 .every(check => check.status === 'healthy');
-                
+
             healthCheck.overallStatus = allChecksHealthy ? 'healthy' : 'degraded';
-            
+
             this.addLog({
                 type: 'HEALTH_CHECK',
                 status: healthCheck.overallStatus,
                 details: healthCheck
             });
-            
+
             return healthCheck;
-            
+
         } catch (error) {
             console.error('❌ Health check failed:', error);
             healthCheck.overallStatus = 'error';
             healthCheck.error = error.message;
-            
+
             return healthCheck;
         }
     }
@@ -248,17 +248,17 @@ export class OperationMonitor {
                     }
                 }
             `;
-            
+
             const response = await this.admin.graphql(query, {
                 variables: {
                     tag: 'tag:geçici-ürün',
                     first: 250
                 }
             });
-            
+
             const result = await response.json();
             return result.data?.products?.edges?.map(edge => edge.node) || [];
-            
+
         } catch (error) {
             console.error('❌ Failed to find temporary products:', error);
             return [];
@@ -268,8 +268,8 @@ export class OperationMonitor {
     filterOldProducts(products, hoursOld) {
         const cutoff = new Date();
         cutoff.setHours(cutoff.getHours() - hoursOld);
-        
-        return products.filter(product => 
+
+        return products.filter(product =>
             new Date(product.createdAt) < cutoff
         );
     }
@@ -277,9 +277,9 @@ export class OperationMonitor {
     getRecentErrors(hours) {
         const cutoff = new Date();
         cutoff.setHours(cutoff.getHours() - hours);
-        
-        return this.logs.filter(log => 
-            log.type.includes('ERROR') && 
+
+        return this.logs.filter(log =>
+            log.type.includes('ERROR') &&
             new Date(log.timestamp) > cutoff
         );
     }
@@ -289,34 +289,34 @@ export class OperationMonitor {
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        
-        const dailyLogs = this.logs.filter(log => 
-            new Date(log.timestamp) >= yesterday && 
+
+        const dailyLogs = this.logs.filter(log =>
+            new Date(log.timestamp) >= yesterday &&
             new Date(log.timestamp) < today
         );
-        
+
         const report = {
             date: today.toISOString().split('T')[0],
             summary: {
                 totalOperations: dailyLogs.length,
                 errors: dailyLogs.filter(log => log.status === 'FAILED' || log.type.includes('ERROR')).length,
                 cleanups: dailyLogs.filter(log => log.type === 'DAILY_CLEANUP').length,
-                alerts: this.alerts.filter(alert => 
-                    new Date(alert.timestamp) >= yesterday && 
+                alerts: this.alerts.filter(alert =>
+                    new Date(alert.timestamp) >= yesterday &&
                     new Date(alert.timestamp) < today
                 ).length
             },
             details: {
                 operations: dailyLogs,
-                alerts: this.alerts.filter(alert => 
-                    new Date(alert.timestamp) >= yesterday && 
+                alerts: this.alerts.filter(alert =>
+                    new Date(alert.timestamp) >= yesterday &&
                     new Date(alert.timestamp) < today
                 )
             }
         };
-        
+
         console.log('📊 Daily Report Generated:', report.summary);
-        
+
         return report;
     }
 
@@ -324,15 +324,15 @@ export class OperationMonitor {
     exportLogs(type = null, hours = 24) {
         const cutoff = new Date();
         cutoff.setHours(cutoff.getHours() - hours);
-        
-        let filteredLogs = this.logs.filter(log => 
+
+        let filteredLogs = this.logs.filter(log =>
             new Date(log.timestamp) > cutoff
         );
-        
+
         if (type) {
             filteredLogs = filteredLogs.filter(log => log.type === type);
         }
-        
+
         return {
             exportedAt: new Date().toISOString(),
             timeFrame: `${hours} hours`,
@@ -346,9 +346,9 @@ export class OperationMonitor {
 // Test fonksiyonları
 export async function testOperationMonitoring(admin) {
     console.log('🧪 Testing Task 17-18: Operation monitoring...');
-    
+
     const monitor = new OperationMonitor(admin);
-    
+
     try {
         // Test logs
         monitor.addLog({
@@ -356,18 +356,18 @@ export async function testOperationMonitoring(admin) {
             message: 'Testing log system',
             status: 'SUCCESS'
         });
-        
+
         // Test alerts
         monitor.createAlert('TEST_ALERT', 'Testing alert system', 'info');
-        
+
         // Test health check
         const healthCheck = await monitor.checkSystemHealth();
         console.log('🔍 Health check:', healthCheck);
-        
+
         // Test daily report
         const report = monitor.generateDailyReport();
         console.log('📊 Daily report generated');
-        
+
         return {
             success: true,
             message: 'Task 17-18 monitoring tests completed',
@@ -378,7 +378,7 @@ export async function testOperationMonitoring(admin) {
                 alertCount: monitor.alerts.length
             }
         };
-        
+
     } catch (error) {
         console.error('❌ Task 17-18 test failed:', error);
         return {

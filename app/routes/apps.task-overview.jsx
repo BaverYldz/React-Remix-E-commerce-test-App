@@ -22,10 +22,10 @@ export async function loader({ request }) {
                 }
             }
         `);
-        
+
         const result = await response.json();
         const tempProducts = result.data?.products?.edges || [];
-        
+
         return json({
             success: true,
             tempProductCount: tempProducts.length,
@@ -37,7 +37,7 @@ export async function loader({ request }) {
             })),
             timestamp: new Date().toISOString()
         });
-        
+
     } catch (error) {
         return json({
             success: false,
@@ -64,10 +64,10 @@ export default function TaskOverview() {
             {/* Sistem Durumu */}
             <section style={{ marginBottom: '40px' }}>
                 <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>Sistem Durumu</h2>
-                
+
                 {data.success ? (
-                    <div style={{ 
-                        backgroundColor: '#d4edda', 
+                    <div style={{
+                        backgroundColor: '#d4edda',
                         border: '1px solid #c3e6cb',
                         borderRadius: '8px',
                         padding: '20px'
@@ -77,25 +77,25 @@ export default function TaskOverview() {
                                 Sistem Çalışıyor
                             </span>
                         </div>
-                        
+
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-                            <InfoCard 
-                                title="Geçici Ürünler" 
-                                value={data.tempProductCount} 
+                            <InfoCard
+                                title="Geçici Ürünler"
+                                value={data.tempProductCount}
                             />
-                            <InfoCard 
-                                title="Otomatik Temizlik" 
-                                value="Aktif" 
+                            <InfoCard
+                                title="Otomatik Temizlik"
+                                value="Aktif"
                             />
-                            <InfoCard 
-                                title="Son Kontrol" 
-                                value={new Date(data.timestamp).toLocaleTimeString('tr-TR')} 
+                            <InfoCard
+                                title="Son Kontrol"
+                                value={new Date(data.timestamp).toLocaleTimeString('tr-TR')}
                             />
                         </div>
                     </div>
                 ) : (
-                    <div style={{ 
-                        backgroundColor: '#f8d7da', 
+                    <div style={{
+                        backgroundColor: '#f8d7da',
                         border: '1px solid #f5c6cb',
                         borderRadius: '8px',
                         padding: '20px'
@@ -112,7 +112,7 @@ export default function TaskOverview() {
             {/* Hızlı İşlemler */}
             <section style={{ marginBottom: '40px' }}>
                 <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>Hızlı İşlemler</h2>
-                
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
                     <ActionCard
                         title="Sistem Testi"
@@ -120,14 +120,14 @@ export default function TaskOverview() {
                         link="/apps/task-11-18-tests"
                         color="#2c3e50"
                     />
-                    
+
                     <ActionCard
                         title="Manuel Temizlik"
                         description="Eski ürünleri hemen sil"
                         link="/apps/cleanup-scheduler-new"
                         color="#2c3e50"
                     />
-                    
+
                     <ActionCard
                         title="Basit Test"
                         description="Temel işlevsellik kontrolü"
@@ -141,17 +141,17 @@ export default function TaskOverview() {
             {data.success && data.tempProducts?.length > 0 && (
                 <section style={{ marginBottom: '40px' }}>
                     <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>Aktif Geçici Ürünler</h2>
-                    
-                    <div style={{ 
+
+                    <div style={{
                         backgroundColor: '#f8f9fa',
                         border: '1px solid #dee2e6',
                         borderRadius: '8px',
                         overflow: 'hidden'
                     }}>
                         {data.tempProducts.map((product, index) => (
-                            <div 
+                            <div
                                 key={product.id}
-                                style={{ 
+                                style={{
                                     padding: '15px',
                                     borderBottom: index < data.tempProducts.length - 1 ? '1px solid #dee2e6' : 'none',
                                     backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa'
@@ -177,7 +177,7 @@ export default function TaskOverview() {
             )}
 
             {/* Footer */}
-            <footer style={{ 
+            <footer style={{
                 marginTop: '50px',
                 padding: '20px',
                 backgroundColor: '#f8f9fa',
@@ -198,7 +198,7 @@ export default function TaskOverview() {
 
 function InfoCard({ title, value }) {
     return (
-        <div style={{ 
+        <div style={{
             backgroundColor: 'white',
             padding: '15px',
             borderRadius: '6px',

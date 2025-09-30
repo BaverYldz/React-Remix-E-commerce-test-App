@@ -90,30 +90,30 @@ export class ErrorHandler {
     // Retry mekanizması
     async retryOperation(operation, operationName, maxAttempts = null) {
         const attempts = maxAttempts || this.retryAttempts;
-        
+
         for (let attempt = 1; attempt <= attempts; attempt++) {
             try {
                 console.log(`🔄 ${operationName} - Attempt ${attempt}/${attempts}`);
-                
+
                 const result = await operation();
-                
+
                 if (attempt > 1) {
                     console.log(`✅ ${operationName} succeeded on attempt ${attempt}`);
                 }
-                
+
                 return {
                     success: true,
                     result: result,
                     attempts: attempt
                 };
-                
+
             } catch (error) {
                 console.error(`❌ ${operationName} failed on attempt ${attempt}:`, error.message);
-                
+
                 if (attempt === attempts) {
                     // Son deneme de başarısız
                     const formattedError = this.formatUserError(error, operationName);
-                    
+
                     return {
                         success: false,
                         error: formattedError,
@@ -121,7 +121,7 @@ export class ErrorHandler {
                         finalError: error
                     };
                 }
-                
+
                 // Sonraki deneme için bekle
                 await this.delay(this.retryDelay * attempt); // Exponential backoff
             }
@@ -132,12 +132,12 @@ export class ErrorHandler {
     async preventDuplicateCreation(identifier, operation, ttlMinutes = 5) {
         const key = `operation_${identifier}`;
         const now = Date.now();
-        
+
         // Basit in-memory cache (gerçek uygulamada Redis/Database kullanın)
         if (!this.operationCache) {
             this.operationCache = new Map();
         }
-        
+
         // Önceki işlemi kontrol et
         const previousOperation = this.operationCache.get(key);
         if (previousOperation && (now - previousOperation.timestamp) < (ttlMinutes * 60 * 1000)) {
@@ -150,32 +150,32 @@ export class ErrorHandler {
                 timeRemaining: Math.ceil(((previousOperation.timestamp + ttlMinutes * 60 * 1000) - now) / 1000)
             };
         }
-        
+
         try {
             // İşlemi cache'e ekle
             this.operationCache.set(key, {
                 timestamp: now,
                 status: 'in_progress'
             });
-            
+
             // İşlemi çalıştır
             const result = await operation();
-            
+
             // Başarılı sonucu cache'e kaydet
             this.operationCache.set(key, {
                 timestamp: now,
                 status: 'completed',
                 result: result
             });
-            
+
             console.log(`✅ Operation completed for: ${identifier}`);
-            
+
             return {
                 success: true,
                 result: result,
                 isDuplicate: false
             };
-            
+
         } catch (error) {
             // Hata durumunda cache'den temizle
             this.operationCache.delete(key);
@@ -192,14 +192,14 @@ export class ErrorHandler {
             timestamp: new Date().toISOString(),
             id: Date.now().toString()
         };
-        
+
         this.errorLog.push(errorEntry);
-        
+
         // Log boyutunu sınırla (son 100 hata)
         if (this.errorLog.length > 100) {
             this.errorLog.shift();
         }
-        
+
         console.error(`🚨 ERROR [${type}] in ${context}:`, message);
     }
 
@@ -207,21 +207,21 @@ export class ErrorHandler {
     getErrorStats(hours = 24) {
         const cutoff = new Date();
         cutoff.setHours(cutoff.getHours() - hours);
-        
-        const recentErrors = this.errorLog.filter(error => 
+
+        const recentErrors = this.errorLog.filter(error =>
             new Date(error.timestamp) > cutoff
         );
-        
+
         const errorCounts = {};
         recentErrors.forEach(error => {
             errorCounts[error.type] = (errorCounts[error.type] || 0) + 1;
         });
-        
+
         return {
             totalErrors: recentErrors.length,
             timeFrame: `${hours} hours`,
             errorBreakdown: errorCounts,
-            criticalErrors: recentErrors.filter(error => 
+            criticalErrors: recentErrors.filter(error =>
                 ['PRODUCT_CREATE_FAILED', 'CLEANUP_FAILED'].includes(error.type)
             ).length
         };
@@ -235,10 +235,10 @@ export class ErrorHandler {
     // Cache temizleme (bellek sızıntısını önlemek için)
     cleanupCache() {
         if (!this.operationCache) return;
-        
+
         const now = Date.now();
         const maxAge = 60 * 60 * 1000; // 1 saat
-        
+
         for (const [key, value] of this.operationCache.entries()) {
             if (now - value.timestamp > maxAge) {
                 this.operationCache.delete(key);
@@ -253,14 +253,14 @@ export const globalErrorHandler = new ErrorHandler();
 // Test fonksiyonları
 export async function testErrorHandling() {
     console.log('🧪 Testing Task 15-16: Error handling and resilience...');
-    
+
     const handler = new ErrorHandler();
-    
+
     // Test 1: Hata mesajı formatlaması
     const networkError = new Error('network timeout');
     const formattedError = handler.formatUserError(networkError, 'cart_addition');
     console.log('📋 Formatted error:', formattedError);
-    
+
     // Test 2: Retry mekanizması
     let attemptCount = 0;
     const flakyOperation = async () => {
@@ -270,32 +270,32 @@ export async function testErrorHandling() {
         }
         return { success: true, data: 'operation completed' };
     };
-    
+
     const retryResult = await handler.retryOperation(flakyOperation, 'test_operation');
     console.log('🔄 Retry result:', retryResult);
-    
+
     // Test 3: Duplicate prevention
     const duplicateResult1 = await handler.preventDuplicateCreation(
         'test_product_123',
         async () => ({ productId: 'test_123', created: true }),
         1
     );
-    
+
     const duplicateResult2 = await handler.preventDuplicateCreation(
         'test_product_123',
         async () => ({ productId: 'test_123', created: true }),
         1
     );
-    
+
     console.log('🚫 Duplicate prevention test:', {
         first: duplicateResult1,
         second: duplicateResult2
     });
-    
+
     // Test 4: Error stats
     const stats = handler.getErrorStats(1);
     console.log('📊 Error statistics:', stats);
-    
+
     return {
         success: true,
         message: 'Task 15-16 error handling tests completed',
